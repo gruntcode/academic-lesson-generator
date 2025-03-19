@@ -110,7 +110,7 @@ def generate_lesson_content(topic, grade_level):
             }
         ],
         model="llama-3.2-3b-preview",
-        max_tokens=4000  # Increased token limit to ensure complete response
+        max_tokens=10000  # Increased token limit to ensure complete response
     )
     
     # Extract the generated content

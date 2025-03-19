@@ -1,6 +1,6 @@
 # Academic Lesson Generator
 
-A modern web application that generates comprehensive academic lessons in PDF format using Groq's Llama 3.1 70B Versatile LLM.
+A modern web application that generates comprehensive academic lessons in PDF format using Groq's Llama 3.2 3B Preview LLM.
 
 ## Features
 
@@ -9,6 +9,9 @@ A modern web application that generates comprehensive academic lessons in PDF fo
 - AI-generated comprehensive lesson content
 - Includes key points, review questions, and quiz
 - Complementary worksheet for each lesson
+- Facilitator's guide for homeschool educators
+- References section with credible sources
+- Lesson description and learning expectations
 - Modern dark-themed UI
 - Automatic PDF download
 
@@ -67,7 +70,7 @@ Follow these steps to use the application:
 ## Technology Stack
 
 - **Backend**: Flask (Python)
-- **LLM**: Groq's Llama 3.1 70B Versatile
+- **LLM**: Groq's Llama 3.2 3B Preview
 - **PDF Generation**: ReportLab
 - **Frontend**: HTML, CSS, JavaScript
 - **UI Theme**: Modern Dark Mode

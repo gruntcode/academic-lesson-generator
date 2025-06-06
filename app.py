@@ -68,37 +68,33 @@ def generate_lesson_content(topic, grade_level):
     
     3. KEY POINTS:
        - List 5-7 key points from the lesson
+       - Format each point as a separate bullet point
     
     4. REVIEW QUESTIONS:
        - Create 5 review questions with answers
+       - Format each question and answer as separate items
     
-    5. QUIZ:
-       - Create a 10-question quiz to assess understanding
-       - Include an answer key
-    
-    6. FACILITATOR'S GUIDE FOR HOMESCHOOL EDUCATORS:
-       - Provide detailed guidance for parents/teachers in a homeschool setting
-       - Include background knowledge that would help teach the topic effectively
-       - Suggest teaching strategies specific to this topic
-       - Recommend additional resources or activities
-       - Include tips for addressing common misconceptions or difficulties
-    
-    7. WORKSHEET:
-       - Create a comprehensive worksheet with activities that complement the lesson
-       - Include a mix of question types (multiple choice, short answer, fill-in-the-blank, etc.)
-       - Make sure the worksheet is substantial with at least 10 questions or activities
-    
-    8. REFERENCES:
+    5. REFERENCES:
        - List 5-7 credible sources related to this topic
        - Include books, websites, academic papers, or other educational resources
        - Format each reference properly with author, title, year, and URL if applicable
        - These should be real, verifiable sources that educators could actually use
     
+    6. FUN FACT:
+       - Include an interesting and engaging fun fact related to the topic
+       - This should be something surprising or fascinating that students would enjoy
+       - Keep it concise but informative
+    
+    7. QUIZ:
+       - Create a 10-question quiz to assess understanding
+       - Include an answer key
+       - Format each question and answer as separate items
+    
     Format each section with clear headings and organize the content in a logical flow.
     DO NOT use markdown formatting in your response. Instead, use plain text with clear section titles.
     For each section, start with the section name in ALL CAPS followed by a colon, like "LESSON CONTENT:" 
-    Separate the worksheet section and facilitator's guide clearly as they should appear on their own pages.
-    Ensure the facilitator's guide, worksheet sections, and references are comprehensive and detailed.
+    Ensure the key points, review questions, and quiz are formatted as separate items, not as paragraphs.
+    Make the fun fact engaging and interesting for students of the specified grade level.
     """
     
     # Call the Groq API with increased max tokens
@@ -109,8 +105,8 @@ def generate_lesson_content(topic, grade_level):
                 "content": prompt,
             }
         ],
-        model="llama-3.2-3b-preview",
-        max_tokens=8000  # Adjusted to be within the model's sequence length limit (8192)
+        model="llama-3.3-70b-versatile",
+        max_tokens=32000  # Increased to leverage the larger model's capacity
     )
     
     # Extract the generated content
@@ -225,38 +221,19 @@ def create_pdf(topic, grade_level, content):
                     line = '• ' + line[1:].strip()
                 story.append(Paragraph(line, normal_style))
     
-    story.append(PageBreak())
+    # No page break here to avoid blank page
     
-    # Add table of contents
-    story.append(Paragraph("TABLE OF CONTENTS", heading_style))
-    story.append(Spacer(1, 12))
-    
-    # Define sections to look for
+    # Define sections to look for (removed facilitator's guide and worksheet, added fun fact before quiz)
     sections = [
         "LESSON CONTENT",
         "KEY POINTS",
         "REVIEW QUESTIONS",
-        "QUIZ",
-        "FACILITATOR'S GUIDE FOR HOMESCHOOL EDUCATORS",
-        "WORKSHEET",
-        "REFERENCES"
+        "REFERENCES",
+        "FUN FACT",
+        "QUIZ"
     ]
     
-    # Create TOC entries
-    toc_data = []
-    for i, section in enumerate(sections, 1):
-        toc_data.append([f"{i}. {section}", ""])
-    
-    # Create table for TOC with proper alignment
-    toc_table = Table(toc_data, colWidths=[5*inch, 1*inch])
-    toc_table.setStyle(TableStyle([
-        ('ALIGN', (0, 0), (0, -1), 'LEFT'),
-        ('TEXTCOLOR', (0, 0), (-1, -1), colors.darkblue),
-        ('FONTNAME', (0, 0), (-1, -1), 'Helvetica-Bold'),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 10),
-    ]))
-    
-    story.append(toc_table)
+    # No table of contents - removed
     story.append(PageBreak())
     
     # Process the content
@@ -267,7 +244,7 @@ def create_pdf(topic, grade_level, content):
     content = re.sub(r'`(.*?)`', r'\1', content)  # Remove code
     
     # Split content into sections
-    section_pattern = r'([A-Z\s\']+(?:\s+FOR\s+HOMESCHOOL\s+EDUCATORS)?):'
+    section_pattern = r'([A-Z\s\']+):'
     sections_content = re.split(section_pattern, content)
     
     # Remove empty strings and process sections
@@ -275,22 +252,103 @@ def create_pdf(topic, grade_level, content):
     
     current_section = None
     
-    for i, section in enumerate(sections_content):
-        # Check if this is a section title
-        if re.match(r'^[A-Z\s\']+(?:\s+FOR\s+HOMESCHOOL\s+EDUCATORS)?$', section):
-            # This is a section title
-            current_section = section
-            story.append(Paragraph(section, heading_style))
+    # Reorder sections to move QUIZ to the end if it exists in the content
+    ordered_sections = []
+    quiz_section = None
+    quiz_content = None
+    
+    for i in range(0, len(sections_content), 2):
+        if i+1 < len(sections_content):
+            section_title = sections_content[i]
+            section_content = sections_content[i+1] if i+1 < len(sections_content) else ""
+            
+            # Skip facilitator's guide and worksheet completely
+            if "FACILITATOR'S GUIDE" in section_title or section_title == "WORKSHEET":
+                continue
+                
+            # Store quiz for later
+            if section_title == "QUIZ":
+                quiz_section = section_title
+                quiz_content = section_content
+            else:
+                ordered_sections.append((section_title, section_content))
+    
+    # Add quiz at the end if it exists
+    if quiz_section and quiz_content:
+        ordered_sections.append((quiz_section, quiz_content))
+    
+    # Process sections in the new order
+    for section_title, section_content in ordered_sections:
+        # This is a section title
+        current_section = section_title
+        
+        # Add page breaks before certain sections
+        if current_section == "QUIZ" or current_section == "REFERENCES":
+            # Add page break before quiz and references
+            story.append(PageBreak())
+            
+        story.append(Paragraph(current_section, heading_style))
+        
+        # Split the content into paragraphs
+        paragraphs = section_content.split('\n\n')
+        
+        # Create a special style for fun facts
+        if current_section == "FUN FACT":
+            # Create a fun fact box with special formatting
+            fun_fact_style = ParagraphStyle(
+                'FunFact',
+                parent=styles['Normal'],
+                fontSize=12,
+                alignment=TA_LEFT,
+                spaceAfter=8,
+                leading=14,
+                backColor=colors.lightblue,
+                borderColor=colors.blue,
+                borderWidth=1,
+                borderPadding=10,
+                textColor=colors.darkblue
+            )
+            
+            # Add a decorative element before the fun fact
+            story.append(Spacer(1, 12))
+            story.append(Paragraph("🔍 Did you know?", subheading_style))
+            story.append(Spacer(1, 6))
+            
+            # Process the fun fact content
+            lines = section_content.split('\n')
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                story.append(Paragraph(line, fun_fact_style))
+                
+            story.append(Spacer(1, 12))
+        # Special formatting for key points, review questions, and quiz
+        elif current_section in ["KEY POINTS", "REVIEW QUESTIONS", "QUIZ"]:
+            # Process these sections with better formatting
+            story.append(Spacer(1, 12))
+            
+            # Split by lines to better identify list items
+            lines = section_content.split('\n')
+            for line in lines:
+                line = line.strip()
+                if not line:
+                    continue
+                    
+                # Format list items properly
+                if line.startswith('- ') or line.startswith('* ') or line.startswith('• '):
+                    # Remove the marker and add a bullet point
+                    clean_line = re.sub(r'^[\-\*\•]\s+', '', line)
+                    story.append(Paragraph(f"• {clean_line}", normal_style))
+                elif re.match(r'^\d+\.\s', line):  # Numbered items like "1. Question"
+                    story.append(Paragraph(line, normal_style))
+                else:
+                    story.append(Paragraph(line, normal_style))
+                    
+            # Add spacer after the section
+            story.append(Spacer(1, 12))
         else:
-            # This is section content
-            if current_section == "WORKSHEET" or current_section == "FACILITATOR'S GUIDE FOR HOMESCHOOL EDUCATORS" or current_section == "REFERENCES":
-                # Add page break before worksheet, facilitator's guide, and references
-                story.append(PageBreak())
-                story.append(Paragraph(current_section, heading_style))
-            
-            # Split the content into paragraphs
-            paragraphs = section.split('\n\n')
-            
+            # Process other sections normally
             for para in paragraphs:
                 para = para.strip()
                 if not para:

@@ -16,12 +16,14 @@
         </header>
 
         <main>
+            <!-- Main form page -->
+            <div id="main-page">
             <div class="card">
                 <div class="card-content">
                     <h2>Generate a Lesson</h2>
                     <p>Fill in the details below to create a comprehensive lesson with review questions and a worksheet.</p>
                     
-                    <form id="lessonForm" action="/generate-lesson" method="post">
+                    <form id="lessonForm" action="/generate-lesson" method="post" target="hidden_iframe">
                         <div class="form-group">
                             <label for="topic">Lesson Topic</label>
                             <input type="text" id="topic" name="topic" required placeholder="e.g., Photosynthesis, American Revolution, Quadratic Equations">
@@ -58,14 +60,37 @@
                     <p class="loading-info">This may take up to a minute as our AI creates a comprehensive lesson plan.</p>
                 </div>
             </div>
+            </div>
+            
+            <!-- Lesson Generating Page -->
+            <div id="generating-page" style="display: none;">
+                <div class="generating-content">
+                    <h2>Lesson Generating</h2>
+                    <div class="generating-animation">
+                        <div class="book-animation">
+                            <div class="book">
+                                <div class="book-page"></div>
+                                <div class="book-page"></div>
+                                <div class="book-page"></div>
+                            </div>
+                        </div>
+                    </div>
+                    <p class="generating-text">Your academic lesson is being created...</p>
+                    <p class="generating-info">Please wait while our AI crafts a comprehensive lesson tailored to your specifications.</p>
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                </div>
+            </div>
         </main>
 
         <footer>
-            <p>Powered by Groq's Llama 3.1 70B Versatile LLM</p>
+            <p>Powered by Groq's Llama 3.3 70B Versatile LLM</p>
             <p>&copy; 2025 Academic Lesson Generator</p>
         </footer>
     </div>
 
     <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <iframe name="hidden_iframe" id="hidden_iframe" style="display:none;"></iframe>
 </body>
 </html>

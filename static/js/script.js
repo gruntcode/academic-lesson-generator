@@ -1,53 +1,54 @@
 document.addEventListener('DOMContentLoaded', function() {
+    // Get DOM elements
     const lessonForm = document.getElementById('lessonForm');
     const generateBtn = document.getElementById('generateBtn');
-    const loadingElement = document.getElementById('loading');
+    const mainPage = document.getElementById('main-page');
+    const generatingPage = document.getElementById('generating-page');
+    const hiddenIframe = document.getElementById('hidden_iframe');
     
-    // Hide loading spinner on page load
-    loadingElement.classList.add('hidden');
+    // Make sure main page is visible and generating page is hidden on load
+    mainPage.style.display = 'block';
+    generatingPage.style.display = 'none';
     
+    // Handle form submission
     lessonForm.addEventListener('submit', function(e) {
-        // Show loading spinner
-        loadingElement.classList.remove('hidden');
+        // Show generating page and hide main page
+        mainPage.style.display = 'none';
+        generatingPage.style.display = 'block';
         
         // Disable the button to prevent multiple submissions
         generateBtn.disabled = true;
         
-        // Create a hidden iframe to handle the file download
-        // This allows us to detect when the download is complete
-        const iframe = document.createElement('iframe');
-        iframe.style.display = 'none';
-        document.body.appendChild(iframe);
-        
-        // Store the original form target and action
-        const originalTarget = lessonForm.target;
-        const originalAction = lessonForm.action;
-        
-        // Set the form to target our hidden iframe
-        lessonForm.target = iframe.name = 'download_iframe';
-        
-        // Let the form submit normally
-        
-        // Listen for the iframe to load, which indicates the response has been received
-        iframe.addEventListener('load', function() {
-            // Reset the loading state
-            loadingElement.classList.add('hidden');
-            generateBtn.disabled = false;
-            
-            // Reset form
-            lessonForm.reset();
-            
-            // Restore original form target and action
-            lessonForm.target = originalTarget;
-            lessonForm.action = originalAction;
-            
-            // Clean up the iframe after a delay to ensure download starts
-            setTimeout(function() {
-                document.body.removeChild(iframe);
-            }, 1000);
-        });
+        // Set a 5-second timer to return to main page regardless of iframe load
+        setTimeout(function() {
+            returnToMainPage();
+        }, 5000);
     });
     
-    // Reset form when page loads (in case of back navigation after download)
+    // Listen for the hidden iframe to load (which happens when the PDF is generated)
+    hiddenIframe.addEventListener('load', function() {
+        // Only process if generating page is visible (means we're in the middle of generation)
+        if (generatingPage.style.display === 'block') {
+            // Small delay to ensure the PDF download has started
+            setTimeout(function() {
+                returnToMainPage();
+            }, 1000);
+        }
+    });
+    
+    // Function to return to main page
+    function returnToMainPage() {
+        // Return to main page
+        generatingPage.style.display = 'none';
+        mainPage.style.display = 'block';
+        
+        // Re-enable the button
+        generateBtn.disabled = false;
+        
+        // Reset the form
+        lessonForm.reset();
+    }
+    
+    // Reset form when page loads
     lessonForm.reset();
 });

@@ -2,6 +2,8 @@
 
 A modern web application that generates comprehensive academic lessons in PDF format using Groq's Llama 3.3 70B Versatile LLM.
 
+![Academic Lesson Generator](./ai_generating_lesson.jpg)
+
 ## Features
 
 - Generate academic lessons on any topic

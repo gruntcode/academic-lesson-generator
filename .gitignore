@@ -40,3 +40,19 @@ Thumbs.db
 *.tmp
 temp/
 tmp/
+
+# Logs directory
+logs/
+
+# Test coverage
+.coverage
+htmlcov/
+.pytest_cache/
+coverage.xml
+
+# Backup files
+*.bak
+app_old.py.bak
+
+# PDF files (generated)
+*.pdf

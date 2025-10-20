@@ -100,6 +100,7 @@ main {
 
 .form-group {
     margin-bottom: 1.5rem;
+    position: relative;
 }
 
 label {
@@ -129,6 +130,27 @@ input:focus, select:focus {
 input::placeholder {
     color: var(--on-surface);
     opacity: 0.5;
+}
+
+.form-hint {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--on-surface);
+    opacity: 0.7;
+    margin-top: 0.25rem;
+}
+
+input.error, select.error {
+    border-color: var(--error);
+    box-shadow: 0 0 0 2px rgba(207, 102, 121, 0.2);
+}
+
+.error-message {
+    display: block;
+    color: var(--error);
+    font-size: 0.85rem;
+    margin-top: 0.25rem;
+    font-weight: 500;
 }
 
 .form-actions {
@@ -166,6 +188,17 @@ input::placeholder {
 
 .btn-primary:active {
     transform: translateY(0);
+}
+
+.btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+}
+
+.btn:focus {
+    outline: 2px solid var(--primary-light);
+    outline-offset: 2px;
 }
 
 .loading-container {
@@ -213,6 +246,44 @@ input::placeholder {
 
 .hidden {
     display: none;
+}
+
+/* Notification Styles */
+.notification {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 1rem 1.5rem;
+    border-radius: 4px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+    z-index: 2000;
+    max-width: 400px;
+    opacity: 0;
+    transform: translateX(400px);
+    transition: all 0.3s ease;
+}
+
+.notification.show {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+.notification-error {
+    background-color: var(--error);
+    color: var(--on-error);
+    border-left: 4px solid #a02030;
+}
+
+.notification-success {
+    background-color: var(--secondary);
+    color: var(--on-secondary);
+    border-left: 4px solid var(--secondary-dark);
+}
+
+.notification-info {
+    background-color: var(--accent);
+    color: var(--on-primary);
+    border-left: 4px solid var(--primary);
 }
 
 footer {
@@ -384,5 +455,34 @@ footer p {
     
     .btn {
         width: 100%;
+    }
+    
+    .notification {
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+}
+
+/* Focus visible for keyboard navigation */
+input:focus-visible, select:focus-visible, button:focus-visible {
+    outline: 2px solid var(--primary-light);
+    outline-offset: 2px;
+}
+
+/* Improve contrast for accessibility */
+@media (prefers-contrast: high) {
+    :root {
+        --on-background: #ffffff;
+        --on-surface: #ffffff;
+    }
+}
+
+/* Respect reduced motion preferences */
+@media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
     }
 }

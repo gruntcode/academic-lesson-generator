@@ -245,7 +245,7 @@ input.error, select.error {
 }
 
 .hidden {
-    display: none;
+    display: none !important;
 }
 
 /* Notification Styles */

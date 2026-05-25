@@ -86,11 +86,13 @@ FLASK_DEBUG=True
 
 ### Running the Application
 
+For local development:
+
 ```bash
 python app.py
 ```
 
-The application will start on `http://127.0.0.1:5000` by default.
+The application starts on `http://127.0.0.1:5000` by default. For production-style runs, use the `wsgi:application` entry point with gunicorn (see [Deployment](#deployment)).
 
 ### Using the Web Interface
 
@@ -196,26 +198,32 @@ Default rate limits (configurable in `.env`):
 
 ## Deployment
 
-### Production Considerations
+### Run with Docker (recommended)
 
-1. **Set production environment variables**:
-   ```bash
-   FLASK_ENV=production
-   FLASK_DEBUG=False
-   SECRET_KEY=<strong-random-key>
-   ```
+```bash
+cp .env.example .env       # then edit values, especially GROQ_API_KEY + SECRET_KEY
+docker compose up --build
+```
 
-2. **Use a production WSGI server** (e.g., Gunicorn):
-   ```bash
-   pip install gunicorn
-   gunicorn -w 4 -b 0.0.0.0:8000 app:app
-   ```
+The container runs gunicorn under a non-root user and exposes port 8000. A
+healthcheck on `/health` is built in.
 
-3. **Set up reverse proxy** (nginx/Apache)
+### Run with gunicorn directly
 
-4. **Configure logging** to file or external service
+```bash
+pip install -r requirements.txt
+export SECRET_KEY=$(python -c "import secrets; print(secrets.token_hex(32))")
+export GROQ_API_KEY=...
+export FLASK_ENV=production
+gunicorn --bind 0.0.0.0:8000 --workers 2 wsgi:application
+```
 
-5. **Set appropriate rate limits** for your use case
+### Production checklist
+
+1. `FLASK_ENV=production` — this enables the `SECRET_KEY` and `GROQ_API_KEY` validation in `config.ProductionConfig.validate()` and will refuse to boot if either is missing or set to the development default.
+2. Put nginx / a managed load balancer in front for TLS termination.
+3. Mount or ship `/app/logs/app.log` to your log aggregator.
+4. Tune `RATE_LIMIT_PER_MINUTE` / `RATE_LIMIT_PER_HOUR` for your audience; switch the limiter's `storage_uri` to Redis if you run multiple workers/replicas.
 
 ## Troubleshooting
 

@@ -1,6 +1,9 @@
 """Pytest configuration and fixtures."""
-import pytest
+
 import os
+
+import pytest
+
 from app import create_app
 from app.llm_service import llm_service
 
@@ -9,13 +12,13 @@ from app.llm_service import llm_service
 def app():
     """Create and configure a test application instance."""
     # Set test environment variables
-    os.environ['GROQ_API_KEY'] = 'test_api_key'
-    
-    app = create_app('testing')
-    
+    os.environ["GROQ_API_KEY"] = "test_api_key"
+
+    app = create_app("testing")
+
     # Initialize LLM service with test key
-    llm_service.initialize('test_api_key')
-    
+    llm_service.initialize("test_api_key")
+
     yield app
 
 

@@ -1,128 +1,110 @@
 """LLM service for generating lesson content using Groq API."""
+
 import groq
 from flask import current_app
+
+SYSTEM_PROMPT = (
+    "You are an experienced academic lesson designer. "
+    "You produce structured, grade-appropriate lessons that teachers can "
+    "use directly in the classroom. "
+    "Be accurate, age-appropriate, and avoid speculation. "
+    "When sources are requested, cite real, verifiable references — never invent them. "
+    "Output plain text only. Do not use markdown (`#`, `**`, `*`, backticks, etc.). "
+    "Use section titles in ALL CAPS followed by a colon (e.g. 'LESSON CONTENT:'). "
+    "Format lists as one item per line beginning with '- '."
+)
 
 
 class LLMService:
     """Service class for interacting with Groq's LLM."""
-    
+
     def __init__(self):
-        """Initialize the LLM service."""
         self.client = None
-    
+
     def initialize(self, api_key):
-        """
-        Initialize the Groq client.
-        
-        Args:
-            api_key: Groq API key
-        """
+        """Initialize the Groq client."""
         if not api_key:
             raise ValueError("GROQ_API_KEY is required")
         self.client = groq.Groq(api_key=api_key)
-    
+
     def generate_lesson_content(self, topic, grade_level):
-        """
-        Generate comprehensive lesson content using Groq's LLM.
-        
-        Args:
-            topic: The lesson topic
-            grade_level: The target grade level
-            
-        Returns:
-            str: Generated lesson content
-            
+        """Generate comprehensive lesson content using Groq's LLM.
+
         Raises:
-            groq.APIError: If the API request fails
-            ValueError: If client is not initialized
+            groq.APIError: If the API request fails.
+            ValueError: If client is not initialized.
         """
         if not self.client:
             raise ValueError("LLM service not initialized")
-        
-        prompt = self._build_prompt(topic, grade_level)
-        
+
+        user_prompt = self._build_user_prompt(topic, grade_level)
+
         try:
             chat_completion = self.client.chat.completions.create(
+                model=current_app.config["GROQ_MODEL"],
+                max_tokens=current_app.config["MAX_TOKENS"],
+                temperature=current_app.config.get("GROQ_TEMPERATURE", 0.4),
                 messages=[
-                    {
-                        "role": "user",
-                        "content": prompt,
-                    }
+                    {"role": "system", "content": SYSTEM_PROMPT},
+                    {"role": "user", "content": user_prompt},
                 ],
-                model=current_app.config['GROQ_MODEL'],
-                max_tokens=current_app.config['MAX_TOKENS']
             )
-            
+
             content = chat_completion.choices[0].message.content
             current_app.logger.info(f"Successfully generated lesson for topic: {topic}")
             return content
-            
-        except groq.APIError as e:
-            current_app.logger.error(f"Groq API error: {e}")
+
+        except groq.APIError:
+            current_app.logger.exception("Groq API error")
             raise
-        except Exception as e:
-            current_app.logger.error(f"Unexpected error in lesson generation: {e}")
+        except Exception:
+            current_app.logger.exception("Unexpected error in lesson generation")
             raise
-    
-    def _build_prompt(self, topic, grade_level):
-        """
-        Build the prompt for lesson generation.
-        
-        Args:
-            topic: The lesson topic
-            grade_level: The target grade level
-            
-        Returns:
-            str: Formatted prompt
-        """
-        return f"""
-Create a comprehensive academic lesson on "{topic}" for {grade_level} students.
 
-Structure the lesson as follows:
+    def _build_user_prompt(self, topic, grade_level):
+        """Build the user message describing the lesson to generate."""
+        return f"""Create a comprehensive academic lesson on "{topic}" for {grade_level} students.
 
-1. TITLE PAGE:
-   - Title: {topic}
-   - Grade Level: {grade_level}
-   - Date: Current date
-   - Lesson Description: A brief 2-3 sentence overview of what this lesson covers
-   - Learning Expectations: 3-4 clear learning objectives for students
+Use exactly the following sections in this order, each introduced by its ALL CAPS title and a colon:
 
-2. LESSON CONTENT:
-   - Provide a thorough explanation of the topic
-   - Include relevant examples
-   - Use language appropriate for {grade_level} students
+LESSON OVERVIEW:
+  - Title: {topic}
+  - Grade Level: {grade_level}
+  - Lesson Description: 2-3 sentence overview of what this lesson covers.
+  - Learning Expectations: 3-4 clear, measurable objectives (one per line, prefixed with "- ").
 
-3. KEY POINTS:
-   - List 5-7 key points from the lesson
-   - Format each point as a separate bullet point
+LESSON CONTENT:
+  - A thorough, grade-appropriate explanation of the topic.
+  - Include concrete examples relevant to {grade_level} students.
 
-4. REVIEW QUESTIONS:
-   - Create 5 review questions with answers
-   - Format each question and answer as separate items
+KEY POINTS:
+  - 5-7 bullet points capturing the most important takeaways. One per line, prefixed with "- ".
 
-5. REFERENCES:
-   - List 5-7 credible sources related to this topic
-   - Include books, websites, academic papers, or other educational resources
-   - Format each reference properly with author, title, year, and URL if applicable
-   - These should be real, verifiable sources that educators could actually use
+REVIEW QUESTIONS:
+  - 5 open-ended questions with model answers.
+  - Format: "Q1: ...", then the next line "A1: ...". Repeat for Q2..Q5.
 
-6. FUN FACT:
-   - Include an interesting and engaging fun fact related to the topic
-   - This should be something surprising or fascinating that students would enjoy
-   - Keep it concise but informative
+REFERENCES:
+  - 5-7 real, verifiable sources (books, peer-reviewed articles, reputable educational sites).
+  - Format each as: Author(s) (Year). Title. Publisher/Journal. URL if applicable.
+  - Do NOT fabricate references. If you are unsure of a specific source, omit it.
 
-7. QUIZ:
-   - Create a 10-question quiz to assess understanding
-   - Include an answer key
-   - Format each question and answer as separate items
+FUN FACT:
+  - One engaging, surprising fact related to the topic, written for {grade_level} students.
 
-Format each section with clear headings and organize the content in a logical flow.
-DO NOT use markdown formatting in your response. Instead, use plain text with clear section titles.
-For each section, start with the section name in ALL CAPS followed by a colon, like "LESSON CONTENT:" 
-Ensure the key points, review questions, and quiz are formatted as separate items, not as paragraphs.
-Make the fun fact engaging and interesting for students of the specified grade level.
+QUIZ:
+  - 10 questions assessing understanding (mix of multiple choice and short answer).
+  - Format: "Q1: ..." then "A1: ..." on the next line. Repeat for Q2..Q10.
+
+Constraints:
+  - Plain text only — no markdown formatting.
+  - Keep tone academic but accessible for {grade_level}.
+  - Do not include any sections beyond those listed above.
 """
 
+    def _build_prompt(self, topic, grade_level):
+        """Backwards-compatible wrapper used by the existing test suite."""
+        return self._build_user_prompt(topic, grade_level)
 
-# Global LLM service instance
+
 llm_service = LLMService()

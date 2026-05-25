@@ -1,38 +1,45 @@
 """Configuration management for Academic Lesson Generator."""
+
 import os
+import secrets
+
 from dotenv import load_dotenv
 
-# Load environment variables
 load_dotenv()
+
+
+_DEV_SECRET_KEY = "dev-secret-key-change-in-production"
 
 
 class Config:
     """Base configuration class."""
-    
-    # Flask Configuration
-    SECRET_KEY = os.getenv('SECRET_KEY', 'dev-secret-key-change-in-production')
-    DEBUG = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
-    
-    # Groq API Configuration
-    GROQ_API_KEY = os.getenv('GROQ_API_KEY')
-    GROQ_MODEL = os.getenv('GROQ_MODEL', 'llama-3.3-70b-versatile')
-    MAX_TOKENS = int(os.getenv('MAX_TOKENS', '32000'))
-    
-    # Rate Limiting
-    RATE_LIMIT_PER_MINUTE = int(os.getenv('RATE_LIMIT_PER_MINUTE', '5'))
-    RATE_LIMIT_PER_HOUR = int(os.getenv('RATE_LIMIT_PER_HOUR', '20'))
-    
+
+    SECRET_KEY = os.getenv("SECRET_KEY", _DEV_SECRET_KEY)
+    DEBUG = os.getenv("FLASK_DEBUG", "False").lower() == "true"
+
+    # Groq API
+    GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+    GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
+    # llama-3.3-70b-versatile caps response at 8192 tokens; lower values also keep
+    # us under the 12k tokens/minute limit on Groq's free tier.
+    MAX_TOKENS = int(os.getenv("MAX_TOKENS", "8000"))
+    GROQ_TEMPERATURE = float(os.getenv("GROQ_TEMPERATURE", "0.4"))
+
+    # Rate limiting
+    RATE_LIMIT_PER_MINUTE = int(os.getenv("RATE_LIMIT_PER_MINUTE", "5"))
+    RATE_LIMIT_PER_HOUR = int(os.getenv("RATE_LIMIT_PER_HOUR", "20"))
+
     # Logging
-    LOG_LEVEL = os.getenv('LOG_LEVEL', 'INFO')
-    LOG_FILE = os.getenv('LOG_FILE', 'app.log')
-    
-    # PDF Generation
-    TEMP_FILE_CLEANUP_DELAY = int(os.getenv('TEMP_FILE_CLEANUP_DELAY', '3600'))
-    
-    # Input Validation
+    LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
+    LOG_FILE = os.getenv("LOG_FILE", "app.log")
+
+    # PDF generation
+    TEMP_FILE_CLEANUP_DELAY = int(os.getenv("TEMP_FILE_CLEANUP_DELAY", "3600"))
+
+    # Input validation
     MAX_TOPIC_LENGTH = 200
     MAX_GRADE_LEVEL_LENGTH = 100
-    
+
     ALLOWED_GRADE_LEVELS = [
         "Elementary School (Grades K-2)",
         "Elementary School (Grades 3-5)",
@@ -40,30 +47,49 @@ class Config:
         "High School (Grades 9-10)",
         "High School (Grades 11-12)",
         "College Undergraduate",
-        "Graduate Level"
+        "Graduate Level",
     ]
+
+    @classmethod
+    def validate(cls):
+        """Hook for per-environment validation. No-op by default."""
+        return
 
 
 class DevelopmentConfig(Config):
     """Development configuration."""
+
     DEBUG = True
 
 
 class ProductionConfig(Config):
     """Production configuration."""
+
     DEBUG = False
+
+    @classmethod
+    def validate(cls):
+        secret = os.getenv("SECRET_KEY")
+        if not secret or secret == _DEV_SECRET_KEY:
+            raise RuntimeError(
+                "SECRET_KEY must be set to a strong, unique value in production. "
+                "Generate one with: python -c 'import secrets; print(secrets.token_hex(32))'"
+            )
+        if not os.getenv("GROQ_API_KEY"):
+            raise RuntimeError("GROQ_API_KEY must be set in production.")
 
 
 class TestingConfig(Config):
     """Testing configuration."""
+
     TESTING = True
     DEBUG = True
+    SECRET_KEY = secrets.token_hex(16)
 
 
-# Configuration dictionary
 config = {
-    'development': DevelopmentConfig,
-    'production': ProductionConfig,
-    'testing': TestingConfig,
-    'default': DevelopmentConfig
+    "development": DevelopmentConfig,
+    "production": ProductionConfig,
+    "testing": TestingConfig,
+    "default": DevelopmentConfig,
 }

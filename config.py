@@ -19,10 +19,12 @@ class Config:
 
     # Groq API
     GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-    GROQ_MODEL = os.getenv("GROQ_MODEL", "llama-3.3-70b-versatile")
-    # llama-3.3-70b-versatile caps response at 8192 tokens; lower values also keep
-    # us under the 12k tokens/minute limit on Groq's free tier.
-    MAX_TOKENS = int(os.getenv("MAX_TOKENS", "8000"))
+    GROQ_MODEL = os.getenv("GROQ_MODEL", "openai/gpt-oss-120b")
+    # openai/gpt-oss-120b allows up to 65,536 completion tokens, but Groq's on-demand
+    # tier caps us at 8,000 tokens/minute and counts prompt + max_tokens against that
+    # limit up front. The lesson prompt is ~600 tokens, so anything above ~7,400 here
+    # gets rejected with a 413 before generation starts.
+    MAX_TOKENS = int(os.getenv("MAX_TOKENS", "7000"))
     GROQ_TEMPERATURE = float(os.getenv("GROQ_TEMPERATURE", "0.4"))
 
     # Rate limiting

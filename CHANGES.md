@@ -2,6 +2,22 @@
 
 This document summarizes all the improvements made to the Academic Lesson Generator.
 
+## Model Migration: Llama 3.3 70B -> GPT-OSS 120B (2026-08-15)
+
+Groq is shutting down `llama-3.3-70b-versatile` on 2026-08-16 for free and
+developer tier usage. The default model is now `openai/gpt-oss-120b`, Groq's
+recommended production-tier replacement.
+
+- `GROQ_MODEL` default: `llama-3.3-70b-versatile` -> `openai/gpt-oss-120b`
+- `MAX_TOKENS` default: `8000` -> `7000`. The new model is subject to an 8,000
+  tokens/minute on-demand limit that counts prompt + `max_tokens` up front, so the
+  old default failed with HTTP 413 `rate_limit_exceeded` before generating anything.
+- Docs and UI footer updated to name the new model.
+
+Verified against the live Groq API: all seven lesson sections render and PDF
+generation succeeds. `openai/gpt-oss-120b` supports 131k context / 65,536 max
+completion tokens, so `MAX_TOKENS` can be raised on a paid tier.
+
 ## Summary
 
 The application has been completely refactored from a single-file Flask app into a production-ready, modular application with comprehensive testing, error handling, and security features.

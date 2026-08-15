@@ -1,6 +1,6 @@
 # Academic Lesson Generator
 
-A modern, production-ready web application that generates comprehensive academic lessons in PDF format using Groq's Llama 3.3 70B Versatile LLM. Built with Flask, featuring robust error handling, rate limiting, comprehensive testing, and accessibility features.
+A modern, production-ready web application that generates comprehensive academic lessons in PDF format using Groq's GPT-OSS 120B LLM. Built with Flask, featuring robust error handling, rate limiting, comprehensive testing, and accessibility features.
 
 ![Academic Lesson Generator](./ai_generating_lesson.jpg)
 
@@ -141,7 +141,7 @@ academic-lesson-generator/
 ## Technology Stack
 
 - **Backend**: Flask 2.3+ (Python web framework)
-- **LLM**: Groq's Llama 3.3 70B Versatile
+- **LLM**: Groq's GPT-OSS 120B (`openai/gpt-oss-120b`)
 - **PDF Generation**: ReportLab 4.0+
 - **Rate Limiting**: Flask-Limiter
 - **Frontend**: HTML5, CSS3, Vanilla JavaScript
@@ -195,6 +195,10 @@ Configuration is managed through:
 Default rate limits (configurable in `.env`):
 - 5 requests per minute per IP
 - 20 requests per hour per IP
+
+Groq's own on-demand tier adds a 8,000 tokens/minute cap, and it counts your prompt
+plus `MAX_TOKENS` against that limit *before* generating. `MAX_TOKENS` therefore
+defaults to `7000`; raising it much higher returns HTTP 413 `rate_limit_exceeded`.
 
 ## Deployment
 
